@@ -187,7 +187,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-100 to-blue-200 flex flex-col items-center justify-center p-6 gap-6">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-500 to-red-500 flex flex-col items-center justify-center p-6 gap-6">
       {!gameStarted && (
         <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-orange-600 via-red-700 to-pink-600 text-white px-6">
           <h1 className="text-6xl font-extrabold mb-8 drop-shadow-lg text-center">
