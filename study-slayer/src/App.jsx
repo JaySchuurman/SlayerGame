@@ -14,16 +14,14 @@ export default function App() {
   const [pauseActive, setPauseActive] = useState(false);
   const [pauseTimeLeft, setPauseTimeLeft] = useState(0);
   const [earnedRewards, setEarnedRewards] = useState([
-    { milestone: 5000, reward: "5 minuten pauze" },
-    { milestone: 10000, reward: "10 minuten pauze" },
+    { milestone: 500, reward: "5 minuten pauze" },
+    { milestone: 1000, reward: "10 minuten pauze" },
   ]);
   const [showLevelCompleteModal, setShowLevelCompleteModal] = useState(false);
 
   const [selectedReward, setSelectedReward] = useState(null);
   const [claimError, setClaimError] = useState(null);
-  const [claimedPauses, setClaimedPauses] = useState([]);
 
-  // Nieuwe state voor uitleg dropdown
   const [isExplanationOpen, setIsExplanationOpen] = useState(false);
 
   const startGame = (selectedMode) => {
@@ -37,7 +35,6 @@ export default function App() {
     setShowLevelCompleteModal(false);
     setSelectedReward(null);
     setClaimError(null);
-    setClaimedPauses([]);
   };
 
   const handleXPChange = (amount) => {
@@ -58,20 +55,19 @@ export default function App() {
       setClaimError("Niet genoeg XP om deze reward te claimen.");
       return;
     }
-    if (claimedPauses.includes(selectedReward)) {
-      setClaimError("Deze reward is al geclaimd.");
+
+    const reward = earnedRewards.find((r) => r.milestone === selectedReward);
+    if (!reward) {
+      setClaimError("Ongeldige reward.");
       return;
     }
 
+    const pauzeMinuten = reward.reward.includes("10 minuten") ? 10 : 5;
+
     setXp((prev) => prev - selectedReward);
     setClaimError(null);
-    setSelectedReward(null);
-
-    const pauzeMinuten = selectedReward >= 10000 ? 10 : 5;
     setPauseActive(true);
     setPauseTimeLeft(pauzeMinuten * 60);
-
-    setClaimedPauses((prev) => [...prev, selectedReward]);
   };
 
   const handleStressChange = (amount) =>
@@ -108,6 +104,7 @@ export default function App() {
 
     if (pauseTimeLeft <= 0) {
       setPauseActive(false);
+      setSelectedReward(null); // reset reward so it can be claimed again
       return;
     }
 
@@ -129,15 +126,14 @@ export default function App() {
     setShowLevelCompleteModal(false);
     setSelectedReward(null);
     setClaimError(null);
-    setClaimedPauses([]);
   };
 
   function RewardDropdown({
     earnedRewards,
-    claimedPauses,
     selectedReward,
     selectReward,
     xp,
+    pauseActive,
   }) {
     const [open, setOpen] = React.useState(true);
 
@@ -155,8 +151,7 @@ export default function App() {
               <li>Je hebt nog geen rewards verdiend.</li>
             )}
             {earnedRewards.map(({ milestone, reward }) => {
-              const isClaimed = claimedPauses.includes(milestone);
-              const canClaim = xp >= milestone && !isClaimed;
+              const canClaim = xp >= milestone && !pauseActive;
 
               return (
                 <li
@@ -165,7 +160,7 @@ export default function App() {
                 >
                   <label
                     className={`flex items-center gap-2 cursor-pointer ${
-                      isClaimed ? "line-through text-gray-400" : ""
+                      !canClaim ? "text-gray-400" : ""
                     }`}
                   >
                     <input
@@ -177,14 +172,9 @@ export default function App() {
                     />
                     <span>{`Bij ${milestone} XP: ${reward}`}</span>
                   </label>
-                  {isClaimed && (
-                    <span className="text-green-600 ml-2 font-semibold">
-                      Geclaimd
-                    </span>
-                  )}
-                  {!isClaimed && !canClaim && (
+                  {!canClaim && (
                     <span className="text-red-500 ml-2 text-xs">
-                      Niet genoeg XP
+                      {pauseActive ? "Pauze bezig" : "Niet genoeg XP"}
                     </span>
                   )}
                 </li>
@@ -199,7 +189,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-100 to-blue-200 flex flex-col items-center justify-center p-6 gap-6">
       {!gameStarted && (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-r from-indigo-600 via-purple-700 to-pink-600 text-white px-6">
+        <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-orange-600 via-red-700 to-pink-600 text-white px-6">
           <h1 className="text-6xl font-extrabold mb-8 drop-shadow-lg text-center">
             Welkom bij <span className="text-yellow-300">Study Slayer!</span>
           </h1>
@@ -207,7 +197,6 @@ export default function App() {
             Klik op de knop om te beginnen:
           </p>
 
-          {/* Dropdown button om uitleg te tonen/verbergen */}
           <button
             onClick={() => setIsExplanationOpen(!isExplanationOpen)}
             className="mb-4 px-4 py-2 bg-blue-500 rounded hover:bg-blue-600 transition"
@@ -215,18 +204,17 @@ export default function App() {
             {isExplanationOpen ? "Verberg uitleg" : "Toon uitleg"}
           </button>
 
-          {/* Uitleg dropdown */}
           {isExplanationOpen && (
             <div className="mb-8 text-lg bg-yellow-100 text-gray-800 rounded-lg p-4 shadow-md max-w-xl text-center mx-auto">
               <p>
-                <strong>Wat je moet doen:</strong> Klik op de bewegende monsters
-                om ze te verslaan. Voor elk verslagen monster krijg je XP en
-                gaat je stress omlaag. Behaal genoeg XP om nieuwe levels te
-                bereiken en rewards te claimen, zoals pauzes!
+                <strong>Wat je moet doen:</strong>
+                <p>- Klik op de bewegende monsters om ze te verslaan. </p>
+                <p>- Probeer je stress level zo laag mogelijk te houden! </p>
+                <p>- Voor elk verslagen monster krijg je XP en gaat je stress omlaag.</p>
+                <p>- Behaal genoeg XP om nieuwe levels te bereiken en rewards te claimen, zoals pauzes!</p>
               </p>
               <p className="mt-2">
-                Let op: hoe hoger het level, hoe meer monsters er zijn en hoe
-                moeilijker het wordt!
+                Let op: hoe hoger het level, hoe meer monsters er zijn en hoe moeilijker het wordt!
               </p>
             </div>
           )}
@@ -276,10 +264,10 @@ export default function App() {
 
             <RewardDropdown
               earnedRewards={earnedRewards}
-              claimedPauses={claimedPauses}
               selectedReward={selectedReward}
               selectReward={setSelectedReward}
               xp={xp}
+              pauseActive={pauseActive}
             />
 
             {claimError && (
@@ -288,9 +276,9 @@ export default function App() {
 
             <button
               onClick={claimSelectedReward}
-              disabled={!selectedReward}
+              disabled={!selectedReward || pauseActive}
               className={`mt-4 w-full py-2 rounded font-bold transition ${
-                selectedReward
+                selectedReward && !pauseActive
                   ? "bg-green-500 hover:bg-green-600 text-white cursor-pointer"
                   : "bg-gray-400 cursor-not-allowed text-gray-700"
               }`}
