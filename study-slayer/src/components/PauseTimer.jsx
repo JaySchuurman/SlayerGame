@@ -18,7 +18,7 @@ export default function PauseTimer({ timeLeft, onFinish }) {
 
   return (
     <div className="bg-yellow-100 text-yellow-900 p-4 rounded-lg shadow-md w-full max-w-md text-center font-semibold text-xl">
-      🛑 Pauze actief! Neem even rust: {formatTime(timeLeft)}
+      🛑 Pauze actief! Neem even rust: {formatTime(timeLeft)} ⏱️
     </div>
   );
 }
